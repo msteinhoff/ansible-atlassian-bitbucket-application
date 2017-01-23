@@ -1,0 +1,27 @@
+---
+- name: Check if mandatory variables are defined
+  include: check_variables.yml
+  tags:
+  - atlassian-bitbucket-application
+
+- name: Setup system environment for Bitbucket application
+  include: setup_environment.yml
+  tags:
+  - atlassian-bitbucket-application
+
+- name: Check state of Bitbucket installation and determine required actions
+  include: determine_installation_state.yml
+  tags:
+  - atlassian-bitbucket-application
+
+- name: Download and install Bitbucket application
+  when: bitbucket_need_installation
+  include: download_and_install.yml
+  tags:
+  - atlassian-bitbucket-application
+
+- name: Configure Bitbucket application
+  when: bitbucket_is_installed
+  include: configure.yml
+  tags:
+  - atlassian-bitbucket-application

@@ -1,0 +1,33 @@
+---
+- name: Configure JVM parameters for Bitbucket application
+  replace:
+    dest: "{{ bitbucket_installation_instance_directory }}/bin/setenv.sh"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+  - regexp: '^JVM_SUPPORT_RECOMMENDED_ARGS="(.*)"'
+    replace: 'JVM_SUPPORT_RECOMMENDED_ARGS="{{ bitbucket_config_jvm_opts }}"'
+  - regexp: '^JVM_MINIMUM_MEMORY="(.*)"'
+    replace: 'JVM_MINIMUM_MEMORY="{{ bitbucket_config_jvm_heap_size }}"'
+  - regexp: '^JVM_MAXIMUM_MEMORY="(.*)"'
+    replace: 'JVM_MAXIMUM_MEMORY="{{ bitbucket_config_jvm_heap_size }}"'
+  notify:
+  - restart bitbucket
+
+- name: Configure server.xml for Bitbucket application
+  template:
+    src: usr/local/bitbucket/server.xml.j2
+    dest: "{{ bitbucket_config_home_directory }}/shared/server.xml"
+    owner: "{{ bitbucket_user_name }}"
+    group: "{{ bitbucket_group_name }}"
+    mode: 0644
+  notify:
+  - restart bitbucket
+
+- name: Configure autostart for Bitbucket application and Elasticsearch instance
+  service:
+    name: "{{ item }}"
+    enabled: "{{ bitbucket_start_on_boot }}"
+  with_items:
+  - "{{ bitbucket_service_name }}"
+  - "{{ bitbucket_service_name }}_search"

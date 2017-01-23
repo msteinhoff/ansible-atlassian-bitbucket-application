@@ -1,0 +1,2 @@
+---
+bitbucket_installation_instance_directory: "{{ bitbucket_config_software_directory }}/{{ bitbucket_installation_archive_name }}"

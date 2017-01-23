@@ -1,0 +1,61 @@
+---
+# Bitbucket requires perl 5.8.8+ and git 2.10+
+# 
+# CentOS 6 default repos provide perl 5.10.1 (good) and git 1.7.1 (bad)
+# 
+# The rackspace ius repository provides a git2u package. the latest git version
+# in ius is 2.11 which is not compatible so the ius-archive repo is used here.
+- name: Install git 2.10.2
+  yum:
+    enablerepo: ius-archive
+    pkg: git2u-2.10.2-1.ius.centos6
+    state: installed
+
+- name: Create Bitbucket group
+  group:
+    name: "{{ bitbucket_group_name }}"
+    system: yes
+
+- name: Create Bitbucket user
+  user:
+    name: "{{ bitbucket_user_name }}"
+    group: "{{ bitbucket_group_name }}"
+    system: yes
+    shell: /bin/bash
+
+- name: Configure limits for Bitbucket user
+  template:
+    src: etc/security/limits.d/bitbucket.conf.j2
+    dest: /etc/security/limits.d/1000-bitbucket.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create Bitbucket directories
+  file:
+    state: directory
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  with_items:
+  - { path: "{{ bitbucket_config_software_directory }}", owner: "{{ bitbucket_user_name }}", group: "{{ bitbucket_group_name }}", mode: '0755' }
+  - { path: "{{ bitbucket_config_home_directory }}", owner: "{{ bitbucket_user_name }}", group: "{{ bitbucket_group_name }}", mode: '0700' }
+
+- name: Provide bitbucketenv.sh script to simplify application administration
+  when: bitbucket_provide_root_environment == true
+  template:
+    src: root/bitbucketenv.sh.j2
+    dest: /root/bitbucketenv.sh
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Enable bitbucketenv.sh script to simplify application administration
+  when: bitbucket_provide_root_environment == true
+  lineinfile:
+    state: present
+    dest: /root/.bash_profile
+    regexp: "(.*)bitbucketenv(.*)"
+    line: ". bitbucketenv.sh"
+    insertafter: EOF

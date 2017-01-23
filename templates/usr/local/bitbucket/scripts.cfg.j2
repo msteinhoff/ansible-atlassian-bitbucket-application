@@ -1,0 +1,13 @@
+#
+#  Config here string to be displayed in Bitbucket start/stop scripts
+#
+#  NOTE: It DOES NOT affect how Tomcat is configured!
+#  Configure server.xml first and after replicate it here
+#  Commented lines should start with a '#'
+#
+
+#Tomcat context where Bitbucket is running
+bitbucket_context={{ bitbucket_config_tomcat_context_path }}
+
+#Tomcat port
+bitbucket_httpport={{ bitbucket_config_tomcat_connectors.standalone.listening_port }}

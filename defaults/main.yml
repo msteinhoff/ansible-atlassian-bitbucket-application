@@ -1,0 +1,31 @@
+---
+bitbucket_user_name: atlbitbucket
+bitbucket_group_name: atlbitbucket
+bitbucket_service_name: atlbitbucket
+bitbucket_provide_root_environment: false
+bitbucket_start_on_boot: false
+
+bitbucket_perform_installation: false
+bitbucket_start_after_installation: false
+bitbucket_installation_archive_url: http://downloads.atlassian.com/software/stash/downloads/atlassian-bitbucket-4.13.0.tar.gz
+bitbucket_installation_archive_checksum: sha256:c98f343f51f81db6ebb7cf3e84737b07cdc7e919aeb039fa1fe1fe638b69971a
+bitbucket_installation_archive_name: atlassian-bitbucket-4.13.0
+bitbucket_installation_jdbc_driver_jar_source_path: ""
+
+bitbucket_config_jre_directory: ""
+bitbucket_config_software_directory: /opt/atlassian/bitbucket
+bitbucket_config_home_directory: /var/atlassian/application-data/bitbucket
+bitbucket_config_jvm_heap_size: 1024m
+bitbucket_config_jvm_opts: ""
+bitbucket_config_tomcat_context_path: ""
+bitbucket_config_tomcat_connectors:
+    standalone:
+        enabled: true
+        type: standalone
+        listening_port: 7990
+    reverse_proxy:
+        enabled: false
+        type: proxy
+        listening_port: 7991
+        proxied_hostname: bitbucket.example.org
+        proxied_port: 443

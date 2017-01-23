@@ -1,0 +1,24 @@
+---
+- name: Check if required variables are defined
+  when: "{{ item }} is not defined"
+  fail:
+    msg: "This role requires '{{ item }}' to be set"
+  with_items:
+  - bitbucket_user_name
+  - bitbucket_group_name
+  - bitbucket_service_name
+  - bitbucket_provide_root_environment
+  - bitbucket_start_on_boot
+  - bitbucket_perform_installation
+  - bitbucket_start_after_installation
+  - bitbucket_installation_archive_url
+  - bitbucket_installation_archive_checksum
+  - bitbucket_installation_archive_name
+  - bitbucket_installation_jdbc_driver_jar_source_path
+  - bitbucket_config_jre_directory
+  - bitbucket_config_software_directory
+  - bitbucket_config_home_directory
+  - bitbucket_config_jvm_heap_size
+  - bitbucket_config_jvm_opts
+  - bitbucket_config_tomcat_context_path
+  - bitbucket_config_tomcat_connectors

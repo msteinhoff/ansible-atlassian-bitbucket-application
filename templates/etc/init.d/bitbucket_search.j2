@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+### BEGIN INIT INFO
+# Provides:          Bitbucket-Search
+# Required-Start:    $local_fs $syslog
+# Required-Stop:     $local_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Bitbucket-Search daemon at boot time
+# Description:       Start Bitbucket-Search daemon at boot time
+### END INIT INFO
+
+# THIS SCRIPT HAS BEEN CONFIGURED TO RUN AS PART OF RUN LEVELS 2 TO 5
+# IF YOU WISH TO CHANGE THIS CONFIGURATION YOU WILL HAVE TO DO IT MANUALLY
+
+PIDFILE={{ bitbucket_config_home_directory }}/shared/search/elasticsearch.pid
+
+start() {
+    ./start-search.sh
+}
+
+stop() {
+    ./stop-search.sh
+}
+
+status() {
+    if [ -f $PIDFILE ]
+    then
+        PID=$(<$PIDFILE)
+        if kill -0 $PID &>1 > /dev/null
+        then
+            echo "Bitbucket-Search is running"
+            exit 0
+        fi
+    fi
+
+    echo "Bitbucket-Search is not running"
+}
+
+# Bitbucket Linux service controller script
+cd {{ bitbucket_installation_instance_directory }}/bin
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status}"
+        exit 1
+        ;;
+esac

@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+### BEGIN INIT INFO
+# Provides:          Bitbucket
+# Required-Start:    $local_fs $network $syslog mysqld Bitbucket-Search
+# Required-Stop:     $local_fs $syslog mysqld
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Bitbucket daemon at boot time
+# Description:       Start Bitbucket daemon at boot time
+### END INIT INFO
+
+# THIS SCRIPT HAS BEEN CONFIGURED TO RUN AS PART OF RUN LEVELS 2 TO 5
+# IF YOU WISH TO CHANGE THIS CONFIGURATION YOU WILL HAVE TO DO IT MANUALLY
+
+PIDFILE={{ bitbucket_installation_instance_directory }}/work/catalina.pid
+
+start() {
+    ./start-webapp.sh
+}
+
+stop() {
+    ./stop-webapp.sh
+}
+
+status() {
+    if [ -f $PIDFILE ]
+    then
+        PID=$(<$PIDFILE)
+        if kill -0 $PID &>1 > /dev/null
+        then
+            echo "Bitbucket is running"
+            exit 0
+        fi
+    fi
+
+    echo "Bitbucket is not running"
+}
+
+# Bitbucket Linux service controller script
+cd {{ bitbucket_installation_instance_directory }}/bin
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status}"
+        exit 1
+        ;;
+esac

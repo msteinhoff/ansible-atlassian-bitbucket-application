@@ -1,0 +1,13 @@
+---
+- name: Check if Bitbucket is installed
+  stat:
+    path: "{{ bitbucket_installation_instance_directory }}"
+  register: st
+
+- name: Determine if Bitbucket is installed
+  set_fact:
+    bitbucket_is_installed: "{{ st.stat.exists }}"
+
+- name: Determine if Bitbucket must be installed
+  set_fact:
+    bitbucket_need_installation: "{{ not bitbucket_is_installed and bitbucket_perform_installation }}"

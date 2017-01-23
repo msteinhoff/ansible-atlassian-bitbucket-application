@@ -1,0 +1,123 @@
+---
+- block:
+  - name: Create temporary download directory
+    shell: mktemp -d
+    register: tempdir_command_output
+
+  - name: Determine path to temporary download directory
+    set_fact:
+      bitbucket_download_directory: "{{ tempdir_command_output.stdout }}"
+
+  - name: Download Bitbucket archive
+    get_url:
+      url: "{{ bitbucket_installation_archive_url }}"
+      checksum: "{{ bitbucket_installation_archive_checksum }}"
+      dest: "{{ bitbucket_download_directory }}/{{ bitbucket_installation_archive_url | basename }}"
+
+  - name: Extract Bitbucket archive
+    unarchive:
+      src: "{{ bitbucket_download_directory }}/{{ bitbucket_installation_archive_url | basename }}"
+      dest: "{{ bitbucket_config_software_directory }}"
+      copy: no
+
+  - name: Stat infos about Bitbucket installation directory
+    stat:
+      path: "{{ bitbucket_installation_instance_directory }}"
+    register: bitbucket_installation_instance_stat
+
+  - name: Fail if Bitbucket installation directory does not exist
+    fail:
+      msg: "Could not find bitbucket install directory at {{ bitbucket_installation_instance_directory }}"
+    when: not bitbucket_installation_instance_stat.stat.exists
+
+  - name: Copy JDBC driver to Bitbucket application if required
+    when: bitbucket_installation_jdbc_driver_jar_source_path is defined and bitbucket_installation_jdbc_driver_jar_source_path != ""
+    copy:
+      remote_src: True
+      src: "{{ bitbucket_installation_jdbc_driver_jar_source_path }}"
+      dest: "{{ bitbucket_installation_instance_directory }}/lib/{{ bitbucket_installation_jdbc_driver_jar_source_path | basename }}"
+
+  - name: Set user/group to root and disable write access for 'group' and 'other' in Bitbucket installation directory
+    file:
+      state: directory
+      dest: "{{ bitbucket_installation_instance_directory }}"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: go-w
+      recurse: yes
+
+  - name: Set user/group to application user and mode to 0700 for logs,temp,work in Bitbucket installation directory
+    file:
+      state: directory
+      dest: "{{ item }}"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: 0700
+    with_items:
+    - "{{ bitbucket_installation_instance_directory }}/logs"
+    - "{{ bitbucket_installation_instance_directory }}/temp"
+    - "{{ bitbucket_installation_instance_directory }}/work"
+
+  - name: Configure JAVA_HOME for Bitbucket application
+    template:
+      src: usr/local/bitbucket/set-java-home.sh.j2
+      dest: "{{ bitbucket_installation_instance_directory }}/bin/set-java-home.sh"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: 0755
+
+  - name: Configure JAVA_HOME for Elasticsearch instance
+    template:
+      src: usr/local/bitbucket/elasticsearch.j2
+      dest: "{{ bitbucket_installation_instance_directory }}/elasticsearch/bin/elasticsearch"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: 0755
+
+  - name: Configure BITBUCKET_USER for Bitbucket application
+    template:
+      src: usr/local/bitbucket/set-bitbucket-user.sh.j2
+      dest: "{{ bitbucket_installation_instance_directory }}/bin/set-bitbucket-user.sh"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: 0755
+
+  - name: Configure BITBUCKET_HOME for Bitbucket application
+    template:
+      src: usr/local/bitbucket/set-bitbucket-home.sh.j2
+      dest: "{{ bitbucket_installation_instance_directory }}/bin/set-bitbucket-home.sh"
+      owner: "{{ bitbucket_user_name }}"
+      group: "{{ bitbucket_group_name }}"
+      mode: 0755
+
+  - name: Install init script for Bitbucket application and bundled Elasticsearch instance
+    template:
+      src: "etc/init.d/{{ item.template }}"
+      dest: "/etc/init.d/{{ item.target }}"
+      owner: root
+      group: root
+      mode: 0755
+    with_items:
+    - { template: "bitbucket.j2", target: "{{ bitbucket_service_name }}" } 
+    - { template: "bitbucket_search.j2", target: "{{ bitbucket_service_name }}_search" } 
+    notify: start bitbucket
+
+  rescue:
+  - name: Remove eventually inconsistent instance directory
+    file:
+      state: absent
+      dest: "{{ bitbucket_installation_instance_directory }}"
+
+  - name: Remove eventually inconsistent init scripts
+    file:
+      state: absent
+      dest: "/etc/init.d/{{ item }}"
+    with_items:
+    - "{{ bitbucket_service_name }}"
+    - "{{ bitbucket_service_name }}_search"
+
+  always:
+  - name: Remove temporary download directory
+    file:
+      state: absent
+      dest: "{{ bitbucket_download_directory }}"
